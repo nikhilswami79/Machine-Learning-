@@ -1,0 +1,275 @@
+---
+title: "Final Project"
+author: "Teresalina Paez"
+date: "April 28, 2017"
+output: html_document
+---
+
+```{r}
+#Importing the Data
+library(readxl)
+wine <- read_excel("C:/Users/Terepaezm/Desktop/Escritorio 2/GW/SPRING 2017/Machine Learning/Final Project/winequality-white.xlsx")
+````
+
+```{r}
+str(wine)
+summary(wine)
+```
+
+```{r}
+outlierKD <- function(dt, var) {
+     var_name <- eval(substitute(var),eval(dt))
+     na1 <- sum(is.na(var_name))
+     m1 <- mean(var_name, na.rm = T)
+     par(mfrow=c(2, 2), oma=c(0,0,3,0))
+     boxplot(var_name, main="With outliers")
+     hist(var_name, main="With outliers", xlab=NA, ylab=NA)
+     outlier <- boxplot.stats(var_name)$out
+     mo <- mean(outlier)
+     var_name <- ifelse(var_name %in% outlier, NA, var_name)
+     boxplot(var_name, main="Without outliers")
+     hist(var_name, main="Without outliers", xlab=NA, ylab=NA)
+     title("Outlier Check", outer=TRUE)
+     na2 <- sum(is.na(var_name))
+     cat("Outliers identified:", na2 - na1, "n")
+     cat("Propotion (%) of outliers:", round((na2 - na1) / sum(!is.na(var_name))*100, 1), "n")
+     cat("Mean of the outliers:", round(mo, 2), "n")
+     m2 <- mean(var_name, na.rm = T)
+     cat("Mean without removing outliers:", round(m1, 2), "n")
+     cat("Mean if we remove outliers:", round(m2, 2), "n")
+     response <- readline(prompt="Do you want to remove outliers and to replace with NA? [yes/no]: ")
+     if(response == "y" | response == "yes"){
+          dt[as.character(substitute(var))] <- invisible(var_name)
+          assign(as.character(as.list(match.call())$dt), dt, envir = .GlobalEnv)
+          cat("Outliers successfully removed", "n")
+          return(invisible(dt))
+     } else{
+          cat("Nothing changed", "n")
+          return(invisible(var_name))
+     }
+}
+```
+
+###Removing Outliers
+
+```{r}
+wine2<-wine
+boxplot(wine2)
+outlierKD(wine2,chlorides)
+```
+
+```{r}
+boxplot(wine2)
+outlierKD(wine2,`volatile acidity`)
+```
+```{r}
+boxplot(wine2)
+outlierKD(wine2,`fixed acidity`)
+```
+
+```{r}
+boxplot(wine2)
+outlierKD(wine2,`residual sugar`)
+```
+```{r}
+boxplot(wine2)
+outlierKD(wine2,`citric acid`)
+```
+```{r}
+boxplot(wine2)
+outlierKD(wine2,`free sulfur dioxide`)
+```
+
+```{r}
+boxplot(wine2)
+outlierKD(wine2,`total sulfur dioxide`)
+```
+
+```{r}
+boxplot(wine2)
+outlierKD(wine2,`density`)
+```
+
+```{r}
+boxplot(wine2)
+outlierKD(wine2,pH)
+```
+```{r}
+boxplot(wine2)
+outlierKD(wine2,sulphates)
+```
+```{r}
+boxplot(wine2)
+```
+#Removing NA's
+```{r}
+wine3<-wine2[complete.cases(wine2),]
+
+hist(wine3$quality)
+table(wine3$quality)
+```
+
+#Recategorizing the dependent variable
+```{r}
+
+#three levels of the target
+wine4<- wine3
+wine4$quality[wine3$quality== 6] <- 2
+wine4$quality[wine3$quality > 6] <- 1
+wine4$quality[wine3$quality < 6] <- 3
+hist(wine4$quality)
+table(wine4$quality)
+
+summary(wine4)
+```
+
+#Normalizing the inputs
+```{r}
+wine4$`fixed acidity` <- (wine3$`fixed acidity`-min(wine3$`fixed acidity`))/(max(wine3$`fixed acidity`) - min (wine3$`fixed acidity`))
+
+summary(wine3$`fixed acidity`)
+summary(wine4$`fixed acidity`)
+
+hist(wine3$`fixed acidity`)
+hist(wine4$`fixed acidity`)
+```
+```{r}
+wine4$`volatile acidity` <- (wine3$`volatile acidity`-min(wine3$`volatile acidity`))/(max(wine3$`volatile acidity`)-min(wine3$`volatile acidity`))
+
+wine4$`citric acid` <- (wine3$`citric acid`-min(wine3$`citric acid`))/(max(wine3$`citric acid`)-min(wine3$`citric acid`))
+
+wine4$`residual sugar` <- (wine3$`residual sugar`-min(wine3$`residual sugar`))/(max(wine3$`residual sugar`)-min(wine3$`residual sugar`))
+
+wine4$chlorides <- (wine3$chlorides-min(wine3$chlorides))/(max(wine3$chlorides)-min(wine3$chlorides))
+
+wine4$`free sulfur dioxide` <- (wine3$`free sulfur dioxide`-min(wine3$`free sulfur dioxide`))/(max(wine3$`free sulfur dioxide`)-min(wine3$`free sulfur dioxide`))
+
+wine4$`total sulfur dioxide` <- (wine3$`total sulfur dioxide`-min(wine3$`total sulfur dioxide`))/(max(wine3$`total sulfur dioxide`)-min(wine3$`total sulfur dioxide`))
+
+wine4$density <- (wine3$density-min(wine3$density))/(max(wine3$density)-min(wine3$density))
+
+wine4$pH <- (wine3$pH-min(wine3$pH))/(max(wine3$pH)-min(wine3$pH))
+
+wine4$sulphates <- (wine3$sulphates-min(wine3$sulphates))/(max(wine3$sulphates)-min(wine3$sulphates))
+
+wine4$alcohol <- (wine3$alcohol-min(wine3$alcohol))/(max(wine3$alcohol)-min(wine3$alcohol))
+
+summary(wine4)
+```
+
+
+```{r}
+library(xlsx)
+write.xlsx(wine4,"C:/Users/Terepaezm/Desktop/Escritorio 2/GW/SPRING 2017/Machine Learning/Final Project/wine4.xlsx")
+```
+
+Feature importance Analysis 
+
+```{r}
+library(corrplot)
+corrplot(cor(wine4[,]),method = "number")
+plot(wine4[,c(-1)])
+
+```
+
+#Spliting the Data
+
+```{r}
+names(wine4) <- gsub(" ", ".", names(wine4))
+set.seed(1234)
+Train_size<- floor(0.7*nrow(wine4))
+train_ind <-sample(seq_len(nrow(wine4)),size=Train_size)
+train<-wine4[train_ind,]
+test<-wine4[-train_ind,]
+```
+
+Important features analysis : Linear Model
+```{r}
+linearmodel<- lm( quality ~ alcohol + chlorides+ sulphates +pH+ citric.acid + total.sulfur.dioxide +residual.sugar+ volatile.acidity+fixed.acidity, train)
+summary(linearmodel)
+
+par(mfrow=c(2,2))
+plot(linearmodel)
+
+```
+
+
+```{r}
+library (caret)
+library(randomForest)
+library(rpart)
+
+```
+
+Important features analysis : Random Forest
+```{r}
+RF1<- randomForest(as.factor(quality)  ~ alcohol + chlorides+ sulphates +pH+ citric.acid +density+ total.sulfur.dioxide +residual.sugar+ volatile.acidity+free.sulfur.dioxide+fixed.acidity
+                     ,method="class", data=train,importance=TRUE, proximity =TRUE)
+
+str(wine4)
+
+```
+```{r}
+#Variable importance
+varImpPlot(RF1,type=1)     
+varImp(RF1)   
+
+varImpPlot(RF1,type=2)     
+varImp(RF1)  
+```
+
+Aplying another algoritm: Boruta to find important Variables.
+```{r}
+
+library("Boruta")
+wineboruta <- Boruta(quality~., data = train, doTrace = 2)
+print(wineboruta)
+```
+
+```{r}
+wineboruta2 <- TentativeRoughFix(wineboruta)
+print(wineboruta2)
+boruta.df <- attStats(wineboruta2)
+class(boruta.df)
+print(boruta.df)
+```
+
+Building the prediction Models
+
+```{r}
+
+fitControl <- trainControl(method = "repeatedcv",
+                           number = 10,
+                           repeats = 10)
+```
+
+MultinomialLogisticRegression
+```{r}
+library(corrplot)
+library(Amelia)
+library(nnet)
+
+
+mod <- train(as.factor(quality) ~.,
+                data = train,
+                method = "multinom",trControl = fitControl)
+
+##Testing the model
+y2<- predict(mod,test)
+accuracy4<- table(y2, test$quality)
+accuracy4
+print(sum((diag(accuracy4))/sum(accuracy4)))
+```
+Random Forest
+```{r}
+randomforestpred1<- predict(RF1,test)
+accuracy5<- table(randomforestpred1, test$quality)
+accuracy5
+print(sum((diag(accuracy5))/sum(accuracy5)))
+```
+
+Exporting the Cleaned data
+```{r}
+library(xlsx)
+write.xlsx(wine4,"C:/Users/Terepaezm/Desktop/Escritorio 2/GW/SPRING 2017/Machine Learning/Final Project/wine4.xlsx")
+```
